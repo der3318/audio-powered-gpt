@@ -1,4 +1,4 @@
-﻿using Azure;
+using Azure;
 using Azure.AI.OpenAI;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
@@ -30,6 +30,7 @@ namespace audio_powered_gpt
             this.GptEndpoint.Text = "https://RESOURCE.openai.azure.com/";
             this.GptModel.Text = "DEPLOYMENT_OR_MODEL_NAME";
             this.ChangeToStartButton();
+            this.ChangeReponseToTextView();
         }
 
         public async void StartStop(object sender, RoutedEventArgs e)
@@ -55,6 +56,7 @@ namespace audio_powered_gpt
             else if (this.Mode.SelectedIndex == 0)  // Translate to Chinese
             {
                 this.ResponseConsole.Text = string.Empty;
+                this.ResponseMdConsole.Markdown = string.Empty;
                 this.audioBackgroundTask = this.AudioBackgroundTask(
                     false,
                     this.SpeechKey.Password,
@@ -67,6 +69,7 @@ namespace audio_powered_gpt
             else if (this.Mode.SelectedIndex == 1)  // Interactive Speech
             {
                 this.ResponseConsole.Text = string.Empty;
+                this.ResponseMdConsole.Markdown = string.Empty;
                 this.audioBackgroundTask = this.AudioBackgroundTask(
                     true,
                     this.SpeechKey.Password,
@@ -79,9 +82,25 @@ namespace audio_powered_gpt
             else if (this.Mode.SelectedIndex == 2)  // Interactive Text
             {
                 this.ResponseConsole.Text = string.Empty;
+                this.ResponseMdConsole.Markdown = string.Empty;
                 await this.GptBackgroundTask(this.PromotConsole.Text, this.GptKey.Password, this.GptEndpoint.Text, this.GptModel.Text);
             }
             this.StartStopBtn.IsEnabled = true;
+        }
+
+        public void TextMarkdown(object sender, RoutedEventArgs e)
+        {
+            lock (this.TextMarkdownBtn)
+            {
+                if (this.IsUsingMarkdown())
+                {
+                    this.ChangeReponseToTextView();
+                }
+                else
+                {
+                    this.ChangeReponseToMarkdownView();
+                }
+            }
         }
 
         private bool IsRunning()
@@ -101,6 +120,27 @@ namespace audio_powered_gpt
             this.StartStopBtn.Background = Brushes.LightCoral;
         }
 
+        private bool IsUsingMarkdown()
+        {
+            return this.TextMarkdownBtn.Content.ToString().Contains("Text");
+        }
+
+        private void ChangeReponseToTextView()
+        {
+            this.ResponseConsole.Visibility = Visibility.Visible;
+            this.ResponseMdConsole.Visibility = Visibility.Collapsed;
+            this.TextMarkdownBtn.Content = "📰 Switch to Markdown View";
+            this.UpdateLayout();
+        }
+
+        private void ChangeReponseToMarkdownView()
+        {
+            this.ResponseConsole.Visibility = Visibility.Collapsed;
+            this.ResponseMdConsole.Visibility = Visibility.Visible;
+            this.TextMarkdownBtn.Content = "🗒 Switch to Text View";
+            this.UpdateLayout();
+        }
+
         private void AppendToTextBox(TextBox textbox, string text)
         {
             const int MaxLoggedLineCnt = 100;
@@ -110,6 +150,11 @@ namespace audio_powered_gpt
             {
                 textbox.Text = textbox.Text[(textbox.Text.IndexOf("\n", StringComparison.OrdinalIgnoreCase) + 1)..];
             }
+        }
+
+        private void RenderMarkdown(string text)
+        {
+            this.ResponseMdConsole.Markdown = $"{text}";
         }
 
         private async Task<int> AudioBackgroundTask(bool interactiveMode, string speechKey, string speechRegion, string gptKey, string gptEndpoint, string gptModel)
@@ -171,7 +216,7 @@ namespace audio_powered_gpt
             {
                 this.Dispatcher.Invoke(() =>
                 {
-                    this.AppendToTextBox(this.PromotConsole, $"EXCEPTION: Message = {e.Message}.");
+                    this.AppendToTextBox(this.PromotConsole, $"EXCEPTION: Message = {e.Message}.\n{e.StackTrace}");
                 });
                 stopRecognition.TrySetResult(0);
             }
@@ -199,6 +244,7 @@ namespace audio_powered_gpt
                 this.Dispatcher.Invoke(() =>
                 {
                     this.AppendToTextBox(this.ResponseConsole, completions.Choices.FirstOrDefault()?.Message.Content ?? string.Empty);
+                    this.RenderMarkdown(completions.Choices.FirstOrDefault()?.Message.Content ?? string.Empty);
                 });
                 new ToastContentBuilder().AddText(completions.Choices.FirstOrDefault()?.Message.Content ?? string.Empty).Show(toast =>
                 {
@@ -209,7 +255,8 @@ namespace audio_powered_gpt
             {
                 this.Dispatcher.Invoke(() =>
                 {
-                    this.AppendToTextBox(this.ResponseConsole, $"EXCEPTION: Message = {e.Message}.");
+                    this.AppendToTextBox(this.ResponseConsole, $"EXCEPTION: Message = {e.Message}.\n{e.StackTrace}");
+                    this.RenderMarkdown($"EXCEPTION: Message = {e.Message}.\n{e.StackTrace}");
                 });
             }
         }

@@ -1,4 +1,4 @@
-﻿<Application x:Class="audio_powered_gpt.App"
+<Application x:Class="audio_powered_gpt.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:audio_powered_gpt"

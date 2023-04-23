@@ -1,0 +1,89 @@
+name: .NET WPF App Release Builder
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '3-digit version number (without prefix v)'
+        required: true
+        default: '0.0.0'
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    env:
+      ApplicationExe: audio-powered-gpt.exe
+      SigningCertificate: AppTemporaryKey.pfx
+      SolutionPath: .\audio-powered-gpt.sln
+
+    steps:
+
+    - name: Configure Pagefile
+      uses: al-cheb/configure-pagefile-action@v1.2
+      with:
+        minimum-size: 32GB
+        maximum-size: 32GB
+        disk-root: "C:"
+
+    - name: Get Tag
+      id: tag
+      uses: dawidd6/action-get-tag@v1
+      if: ${{ github.event.inputs.version == '0.0.0.0' }}
+      with:
+        strip_v: true
+
+    - name: Get Date
+      uses: josStorer/get-current-time@v2.0.2
+      id: date
+      with:
+        format: YYYYMMDD
+        utcOffset: "+08:00"
+
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: "6.0.x"
+
+    - name: Decode Pfx
+      run: |
+        $pfxCertByte = [System.Convert]::FromBase64String("${{ secrets.PFX_BASE64_ENCODED }}")
+        $currentDirectory = Get-Location
+        $certificatePath = Join-Path -Path $currentDirectory -ChildPath ${{ env.SigningCertificate }}
+        [IO.File]::WriteAllBytes("$certificatePath", $pfxCertByte)
+
+    - name: Build
+      run: dotnet publish ${{ env.SolutionPath }} -c Release -o C:\Publish -r win-x64 --self-contained true
+
+    - name: Add Signature
+      run: 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe' sign /f ${{ env.SigningCertificate }} /p "${{ secrets.PFX_PASSWORD }}" /fd SHA256 C:\Publish\${{ env.ApplicationExe }}
+
+    - name: Remove Pfx
+      run: Remove-Item -path ${{ env.SigningCertificate }}
+
+    - name: Create Release
+      id: release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.event.inputs.version }}
+        release_name: ${{ steps.date.outputs.formattedTime }}
+        draft: true
+        prerelease: false
+
+    - name: Update Asset
+      id: asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release.outputs.upload_url }}
+        asset_path: C:\Publish\${{ env.ApplicationExe }}
+        asset_name: ${{ env.ApplicationExe }}
+        asset_content_type: application/x-binary
