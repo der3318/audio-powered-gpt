@@ -15,7 +15,7 @@ jobs:
     env:
       ApplicationExe: audio-powered-gpt.exe
       SigningCertificate: AppTemporaryKey.pfx
-      SolutionPath: .\audio-powered-gpt.sln
+      ProjectPath: .\audio-powered-gpt.csproj
 
     steps:
 
@@ -25,13 +25,6 @@ jobs:
         minimum-size: 32GB
         maximum-size: 32GB
         disk-root: "C:"
-
-    - name: Get Tag
-      id: tag
-      uses: dawidd6/action-get-tag@v1
-      if: ${{ github.event.inputs.version == '0.0.0.0' }}
-      with:
-        strip_v: true
 
     - name: Get Date
       uses: josStorer/get-current-time@v2.0.2
@@ -58,10 +51,9 @@ jobs:
         [IO.File]::WriteAllBytes("$certificatePath", $pfxCertByte)
 
     - name: Build
-      run: dotnet publish ${{ env.SolutionPath }} -c Release -o C:\Publish -r win-x64 --self-contained true
-
-    - name: Add Signature
-      run: 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe' sign /f ${{ env.SigningCertificate }} /p "${{ secrets.PFX_PASSWORD }}" /fd SHA256 C:\Publish\${{ env.ApplicationExe }}
+      run: |
+        dotnet publish ${{ env.ProjectPath }} -c Release -o C:\Publish -r win-x64 --self-contained true
+        & 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\signtool.exe' sign /f ${{ env.SigningCertificate }} /p ${{ secrets.PFX_PASSWORD }} /fd SHA256 C:\Publish\${{ env.ApplicationExe }}
 
     - name: Remove Pfx
       run: Remove-Item -path ${{ env.SigningCertificate }}
