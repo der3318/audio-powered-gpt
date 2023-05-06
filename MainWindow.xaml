@@ -9,6 +9,7 @@
         Title="Audio Powered GPT" Height="450" Width="800">
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height=".1*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height=".1*"/>
@@ -33,49 +34,83 @@
             <ColumnDefinition Width="2*"/>
             <ColumnDefinition Width=".1*"/>
         </Grid.ColumnDefinitions>
+        <Menu Grid.ColumnSpan="9">
+            <MenuItem Header="Configs">
+                <MenuItem
+                    Header="Load"
+                    Click="ConfigsLoad">
+                    <MenuItem.Icon>
+                        <Image Source="MenuIcons/load.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem
+                    Header="Save"
+                    Click="ConfigsSave">
+                    <MenuItem.Icon>
+                        <Image Source="MenuIcons/save.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="About">
+                <MenuItem
+                    Header="Version"
+                    Click="AboutVersion">
+                    <MenuItem.Icon>
+                        <Image Source="MenuIcons/version.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem
+                    Header="Source"
+                    Click="AboutSource">
+                    <MenuItem.Icon>
+                        <Image Source="MenuIcons/source.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+            </MenuItem>
+        </Menu>
         <TextBlock
-            Grid.Row="1"
+            Grid.Row="2"
             Grid.Column="1"
             Text="STT Key "/>
         <PasswordBox
             x:Name="SpeechKey"
-            Grid.Row="1"
+            Grid.Row="2"
             Grid.Column="3"/>
         <TextBlock
-            Grid.Row="1"
+            Grid.Row="2"
             Grid.Column="5"
             Text="STT Region "/>
         <TextBox
             x:Name="SpeechRegion"
-            Grid.Row="1"
+            Grid.Row="2"
             Grid.Column="7"/>
         <TextBlock
-            Grid.Row="3"
+            Grid.Row="4"
             Grid.Column="1"
             Text="AOAI Key "/>
         <PasswordBox
             x:Name="GptKey"
-            Grid.Row="3"
+            Grid.Row="4"
             Grid.Column="3"/>
         <TextBlock
-            Grid.Row="3"
+            Grid.Row="4"
             Grid.Column="5"
             Text="AOAI Model "/>
         <TextBox
             x:Name="GptModel"
-            Grid.Row="3"
+            Grid.Row="4"
             Grid.Column="7"/>
         <TextBlock
-            Grid.Row="5"
+            Grid.Row="6"
             Grid.Column="1"
             Text="AOAI Endpoint "/>
         <TextBox
             x:Name="GptEndpoint"
-            Grid.Row="5"
+            Grid.Row="6"
             Grid.Column="3"/>
         <ComboBox
             x:Name="Mode"
-            Grid.Row="5"
+            Grid.Row="6"
             Grid.Column="5">
             <ComboBoxItem>Translate to Chinese</ComboBoxItem>
             <ComboBoxItem>Interactive Speech</ComboBoxItem>
@@ -83,14 +118,14 @@
         </ComboBox>
         <Button
             x:Name="StartStopBtn"
-            Grid.Row="5"
+            Grid.Row="6"
             Grid.Column="7"
             Content="Start/Stop"
             IsEnabled="True"
             Click="StartStop"/>
         <TextBox
             x:Name="PromotConsole"
-            Grid.Row="7"
+            Grid.Row="8"
             Grid.Column="1"
             Grid.ColumnSpan="7"
             TextWrapping="Wrap"
@@ -98,7 +133,7 @@
             VerticalScrollBarVisibility="Visible"/>
         <TextBox
             x:Name="ResponseConsole"
-            Grid.Row="9"
+            Grid.Row="10"
             Grid.Column="1"
             Grid.ColumnSpan="7"
             IsReadOnly="True"
@@ -107,12 +142,12 @@
             VerticalScrollBarVisibility="Visible"/>
         <mdxam:MarkdownScrollViewer
             x:Name="ResponseMdConsole"
-            Grid.Row="9"
+            Grid.Row="10"
             Grid.Column="1"
             Grid.ColumnSpan="7"/>
         <Button
             x:Name="TextMarkdownBtn"
-            Grid.Row="10"
+            Grid.Row="11"
             Grid.Column="1"
             Grid.ColumnSpan="7"
             Content="Text/Markdown"

@@ -1,11 +1,12 @@
 
 ## 💬 Audio Powered GPT
 
-![version](https://img.shields.io/badge/version-2.0.1-blue.svg)
+![version](https://img.shields.io/badge/version-2.0.2-blue.svg)
 ![dotnetf](https://img.shields.io/badge/.net-6.0-green.svg)
 [![openai](https://img.shields.io/badge/Azure.AI.OpenAI%20%28nuget%29-1.0.0%20beta.5-yellow.svg)](https://www.nuget.org/packages/Azure.AI.OpenAI)
 [![speech](https://img.shields.io/badge/Microsoft.CognitiveServices.Speech%20%28nuget%29-1.27.0-pink.svg)](https://www.nuget.org/packages/Microsoft.CognitiveServices.Speech)
 ![portable](https://img.shields.io/badge/portable-win%20x64%2019041+-blueviolet.svg)
+[![.NET WPF App Release Builder](https://github.com/der3318/audio-powered-gpt/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/der3318/audio-powered-gpt/actions/workflows/release.yml)
 
 A tiny WPF interface that integrates [Azure cognitive service](https://portal.azure.com/#create/Microsoft.CognitiveServicesSpeechServices) with [GPT endpoint](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/how-to/create-resource). This requires Azure subscription resources of both speech service and OpenAI.
 

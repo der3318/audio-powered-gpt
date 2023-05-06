@@ -4,12 +4,16 @@ using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
 using Microsoft.Toolkit.Uwp.Notifications;
 using System;
+using System.IO;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace audio_powered_gpt
 {
@@ -31,6 +35,63 @@ namespace audio_powered_gpt
             this.GptModel.Text = "DEPLOYMENT_OR_MODEL_NAME";
             this.ChangeToStartButton();
             this.ChangeReponseToTextView();
+        }
+
+        public void ConfigsLoad(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            dlg.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+            if (dlg.ShowDialog() == true)
+            {
+                try
+                {
+                    Dictionary<string, string> configs = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(dlg.FileName));
+                    this.SpeechKey.Password = configs?.GetValueOrDefault("SpeechKey") ?? string.Empty;
+                    this.SpeechRegion.Text = configs?.GetValueOrDefault("SpeechRegion") ?? string.Empty;
+                    this.GptKey.Password = configs?.GetValueOrDefault("GptKey") ?? string.Empty;
+                    this.GptEndpoint.Text = configs?.GetValueOrDefault("GptEndpoint") ?? string.Empty;
+                    this.GptModel.Text = configs?.GetValueOrDefault("GptModel") ?? string.Empty;
+                    this.ShowToast($"Loaded: {dlg.FileName}");
+                }
+                catch (Exception exception)
+                {
+                    this.ShowToast($"Error: {exception.Message}");
+                }
+            }
+        }
+
+        public void ConfigsSave(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+            if (dlg.ShowDialog() == true)
+            {
+                Dictionary<string, string> configs = new Dictionary<string, string>
+                {
+                    { "SpeechKey", this.SpeechKey.Password },
+                    { "SpeechRegion", this.SpeechRegion.Text },
+                    { "GptKey", this.GptKey.Password },
+                    { "GptEndpoint", this.GptEndpoint.Text },
+                    { "GptModel", this.GptModel.Text }
+                };
+                string json = JsonSerializer.Serialize(configs);
+                File.WriteAllText(dlg.FileName, json);
+                this.ShowToast($"Saved: {dlg.FileName}");
+            }
+        }
+
+        public void AboutVersion(object sender, RoutedEventArgs e)
+        {
+            this.ShowToast($"Version: {Assembly.GetExecutingAssembly().GetName().Version}");
+        }
+
+        public void AboutSource(object sender, RoutedEventArgs e)
+        {
+            string destinationurl = "https://github.com/der3318/audio-powered-gpt";
+            Process.Start(new ProcessStartInfo(destinationurl)
+            {
+                UseShellExecute = true,
+            });
         }
 
         public async void StartStop(object sender, RoutedEventArgs e)
@@ -157,6 +218,14 @@ namespace audio_powered_gpt
             this.ResponseMdConsole.Markdown = $"{text}";
         }
 
+        private void ShowToast(string text)
+        {
+            new ToastContentBuilder().AddText(text).Show(toast =>
+            {
+                toast.ExpirationTime = DateTime.Now.AddSeconds(3);
+            });
+        }
+
         private async Task<int> AudioBackgroundTask(bool interactiveMode, string speechKey, string speechRegion, string gptKey, string gptEndpoint, string gptModel)
         {
             TaskCompletionSource<int> stopRecognition = new TaskCompletionSource<int>();
@@ -241,15 +310,13 @@ namespace audio_powered_gpt
                         PresencePenalty = 0,
                     });
                 ChatCompletions completions = response.Value;
+                string message = completions.Choices.FirstOrDefault()?.Message.Content ?? string.Empty;
                 this.Dispatcher.Invoke(() =>
                 {
-                    this.AppendToTextBox(this.ResponseConsole, completions.Choices.FirstOrDefault()?.Message.Content ?? string.Empty);
-                    this.RenderMarkdown(completions.Choices.FirstOrDefault()?.Message.Content ?? string.Empty);
+                    this.AppendToTextBox(this.ResponseConsole, message);
+                    this.RenderMarkdown(message);
                 });
-                new ToastContentBuilder().AddText(completions.Choices.FirstOrDefault()?.Message.Content ?? string.Empty).Show(toast =>
-                {
-                    toast.ExpirationTime = DateTime.Now.AddSeconds(3);
-                });
+                this.ShowToast(message);
             }
             catch (Exception e)
             {
